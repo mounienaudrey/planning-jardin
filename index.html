@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+
+input, button {
+  display: block;
+  margin: 10px 0;
+  padding: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+button {
+  background-color: green;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+li {
+  margin: 10px 0;
+}
+</style>
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Planning Espaces Verts</title>
+
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+
+
+
+  <h1>Planning Entretien Jardin</h1>
+
+
+<input type="text" id="client" placeholder="Nom du client">
+<input type="date" id="date">
+<input type="text" id="prestation" placeholder="Type (tonte, taille...)">
+<button onclick="ajouterTache()">Ajouter</button>
+  <input type="text" id="prestation" placeholder="Type (tonte, taille...)">
+
+  <input type="date" id="date">
+
+  <button onclick="ajouterTache()">Ajouter</button>
+
+
+
+  <ul id="planning"></ul>
+
+
+
+  <script src="script.js"></script>
+
+
+
+</body>
+
+</html>
