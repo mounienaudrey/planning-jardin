@@ -3,31 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planning Jardin Pro</title>
+<title>Planning Jardin PRO+</title>
 
 <style>
-body {
-  font-family: Arial;
-  padding: 20px;
-  background: #f4f4f4;
-}
-
-h1 {
-  text-align: center;
-}
+body { font-family: Arial; padding: 20px; background: #f4f4f4; }
 
 input, button {
   width: 100%;
   padding: 12px;
   margin: 5px 0;
-  font-size: 16px;
 }
 
-button {
-  background: green;
-  color: white;
-  border: none;
-}
+button { background: green; color: white; border: none; }
 
 .carte {
   background: white;
@@ -36,24 +23,28 @@ button {
   border-radius: 10px;
 }
 
-.supprimer {
-  background: red;
-  margin-top: 10px;
+.actions button {
+  margin-top: 5px;
+  background: #333;
 }
-</style>
 
+.supprimer { background: red; }
+.facture { background: blue; }
+.gps { background: orange; }
+</style>
 </head>
 
 <body>
 
-<h1>🌿 Planning Jardin PRO</h1>
+<h2>🌿 Planning Jardin PRO+</h2>
 
-<input type="text" id="client" placeholder="Nom du client">
-<input type="text" id="tel" placeholder="Téléphone">
-<input type="text" id="adresse" placeholder="Adresse">
+<input id="client" placeholder="Nom client">
+<input id="tel" placeholder="Téléphone">
+<input id="adresse" placeholder="Adresse">
 <input type="date" id="date">
 <input type="time" id="heure">
-<input type="text" id="prestation" placeholder="Type (tonte, taille...)">
+<input id="prestation" placeholder="Prestation">
+<input id="prix" placeholder="Prix (€)">
 
 <button onclick="ajouter()">Ajouter</button>
 
@@ -63,59 +54,85 @@ button {
 
 let liste = JSON.parse(localStorage.getItem("planning")) || [];
 
-function afficher() {
-  const planning = document.getElementById("planning");
-  planning.innerHTML = "";
-
-  liste.sort((a, b) => new Date(a.date + " " + a.heure) - new Date(b.date + " " + b.heure));
-
-  liste.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "carte";
-
-    div.innerHTML = `
-      <strong>${item.date} à ${item.heure}</strong><br>
-      👤 ${item.client}<br>
-      📞 ${item.tel}<br>
-      📍 ${item.adresse}<br>
-      🌿 ${item.prestation}
-      <button class="supprimer" onclick="supprimer(${index})">Supprimer</button>
-    `;
-
-    planning.appendChild(div);
-  });
-
-  localStorage.setItem("planning", JSON.stringify(liste));
-}
-
 function ajouter() {
-  const client = document.getElementById("client").value;
-  const tel = document.getElementById("tel").value;
-  const adresse = document.getElementById("adresse").value;
-  const date = document.getElementById("date").value;
-  const heure = document.getElementById("heure").value;
-  const prestation = document.getElementById("prestation").value;
+  let client = document.getElementById("client").value;
+  let tel = document.getElementById("tel").value;
+  let adresse = document.getElementById("adresse").value;
+  let date = document.getElementById("date").value;
+  let heure = document.getElementById("heure").value;
+  let prestation = document.getElementById("prestation").value;
+  let prix = document.getElementById("prix").value;
 
   if (!date || !prestation) {
     alert("Date et prestation obligatoires !");
     return;
   }
 
-  liste.push({ client, tel, adresse, date, heure, prestation });
+  liste.push({ client, tel, adresse, date, heure, prestation, prix });
 
-  document.getElementById("client").value = "";
-  document.getElementById("tel").value = "";
-  document.getElementById("adresse").value = "";
-  document.getElementById("date").value = "";
-  document.getElementById("heure").value = "";
-  document.getElementById("prestation").value = "";
+  localStorage.setItem("planning", JSON.stringify(liste));
+
+  document.querySelectorAll("input").forEach(i => i.value = "");
 
   afficher();
 }
 
+function afficher() {
+  let planning = document.getElementById("planning");
+  planning.innerHTML = "";
+
+  liste.sort((a, b) => new Date(a.date + " " + a.heure) - new Date(b.date + " " + b.heure));
+
+  liste.forEach((item, index) => {
+
+    let div = document.createElement("div");
+    div.className = "carte";
+
+    div.innerHTML = `
+      <strong>${item.date} ${item.heure}</strong><br>
+      👤 ${item.client}<br>
+      📞 ${item.tel}<br>
+      📍 ${item.adresse}<br>
+      🌿 ${item.prestation}<br>
+      💰 ${item.prix} €
+
+      <div class="actions">
+        <button class="gps" onclick="gps('${item.adresse}')">📍 GPS</button>
+        <button class="facture" onclick="facture(${index})">🧾 Facture</button>
+        <button class="supprimer" onclick="supprimer(${index})">❌ Supprimer</button>
+      </div>
+    `;
+
+    planning.appendChild(div);
+  });
+}
+
 function supprimer(index) {
   liste.splice(index, 1);
+  localStorage.setItem("planning", JSON.stringify(liste));
   afficher();
+}
+
+function gps(adresse) {
+  let url = "https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.google.com%2Fmaps%2Fsearch%2F%3Fapi%3D1%26query%3D&data=05%7C02%7C%7Cc712f0bc967147c449bd08de948bc4cd%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C639111525201144377%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=t0WUeYgIVbGbMHl3I53ntgaKTlfUW7PmOAXLq%2FIoJvs%3D&reserved=0" + encodeURIComponent(adresse);
+  window.open(url, "_blank");
+}
+
+function facture(index) {
+  let item = liste[index];
+
+  let contenu = `
+    FACTURE\n\n
+    Client : ${item.client}\n
+    Téléphone : ${item.tel}\n
+    Adresse : ${item.adresse}\n\n
+    Prestation : ${item.prestation}\n
+    Date : ${item.date}\n
+    Heure : ${item.heure}\n\n
+    Montant : ${item.prix} €
+  `;
+
+  alert(contenu);
 }
 
 afficher();
