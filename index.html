@@ -1,66 +1,126 @@
 <!DOCTYPE html>
-
 <html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning Jardin Pro</title>
+
 <style>
 body {
   font-family: Arial;
   padding: 20px;
+  background: #f4f4f4;
+}
+
+h1 {
+  text-align: center;
 }
 
 input, button {
-  display: block;
-  margin: 10px 0;
-  padding: 10px;
   width: 100%;
-  max-width: 400px;
+  padding: 12px;
+  margin: 5px 0;
+  font-size: 16px;
 }
 
 button {
-  background-color: green;
+  background: green;
   color: white;
   border: none;
-  cursor: pointer;
 }
 
-li {
-  margin: 10px 0;
+.carte {
+  background: white;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+.supprimer {
+  background: red;
+  margin-top: 10px;
 }
 </style>
-<head>
-
-  <meta charset="UTF-8">
-
-  <title>Planning Espaces Verts</title>
 
 </head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <body>
 
-
-
-  <h1>Planning Entretien Jardin</h1>
-
+<h1>🌿 Planning Jardin PRO</h1>
 
 <input type="text" id="client" placeholder="Nom du client">
+<input type="text" id="tel" placeholder="Téléphone">
+<input type="text" id="adresse" placeholder="Adresse">
 <input type="date" id="date">
+<input type="time" id="heure">
 <input type="text" id="prestation" placeholder="Type (tonte, taille...)">
-<button onclick="ajouterTache()">Ajouter</button>
-  <input type="text" id="prestation" placeholder="Type (tonte, taille...)">
 
-  <input type="date" id="date">
+<button onclick="ajouter()">Ajouter</button>
 
-  <button onclick="ajouterTache()">Ajouter</button>
+<div id="planning"></div>
 
+<script>
 
+let liste = JSON.parse(localStorage.getItem("planning")) || [];
 
-  <ul id="planning"></ul>
+function afficher() {
+  const planning = document.getElementById("planning");
+  planning.innerHTML = "";
 
+  liste.sort((a, b) => new Date(a.date + " " + a.heure) - new Date(b.date + " " + b.heure));
 
+  liste.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "carte";
 
-  <script src="script.js"></script>
+    div.innerHTML = `
+      <strong>${item.date} à ${item.heure}</strong><br>
+      👤 ${item.client}<br>
+      📞 ${item.tel}<br>
+      📍 ${item.adresse}<br>
+      🌿 ${item.prestation}
+      <button class="supprimer" onclick="supprimer(${index})">Supprimer</button>
+    `;
 
+    planning.appendChild(div);
+  });
 
+  localStorage.setItem("planning", JSON.stringify(liste));
+}
+
+function ajouter() {
+  const client = document.getElementById("client").value;
+  const tel = document.getElementById("tel").value;
+  const adresse = document.getElementById("adresse").value;
+  const date = document.getElementById("date").value;
+  const heure = document.getElementById("heure").value;
+  const prestation = document.getElementById("prestation").value;
+
+  if (!date || !prestation) {
+    alert("Date et prestation obligatoires !");
+    return;
+  }
+
+  liste.push({ client, tel, adresse, date, heure, prestation });
+
+  document.getElementById("client").value = "";
+  document.getElementById("tel").value = "";
+  document.getElementById("adresse").value = "";
+  document.getElementById("date").value = "";
+  document.getElementById("heure").value = "";
+  document.getElementById("prestation").value = "";
+
+  afficher();
+}
+
+function supprimer(index) {
+  liste.splice(index, 1);
+  afficher();
+}
+
+afficher();
+
+</script>
 
 </body>
-
 </html>
