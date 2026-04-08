@@ -1,21 +1,35 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <script src="https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Fjspdf%2F2.5.1%2Fjspdf.umd.min.js&data=05%7C02%7C%7C4ce3a3139d0f4fc5a9e608de950562d5%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C639112047527125199%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=CSRKvONkzdyW4KntOb4iuKTvo8EhK8dw1he6%2Fvg59Co%3D&reserved=0"></script>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planning Jardin PRO+</title>
+<title>Planning Jardin PRO++</title>
+
+<script src="https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Fjspdf%2F2.5.1%2Fjspdf.umd.min.js&data=05%7C02%7C%7C4d0072580b74400f359c08de9508f245%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C639112062802798909%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=vn1xk3ZKz822ZmcPFnBI6teQmP7J4US6y6TjKbmjUqI%3D&reserved=0"></script>
 
 <style>
-body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 5px 0;
+body {
+  font-family: Arial;
+  padding: 15px;
+  background: #f4f4f4;
 }
 
-button { background: green; color: white; border: none; }
+h2 {
+  text-align: center;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+button {
+  background: green;
+  color: white;
+  border: none;
+}
 
 .carte {
   background: white;
@@ -26,18 +40,20 @@ button { background: green; color: white; border: none; }
 
 .actions button {
   margin-top: 5px;
-  background: #333;
 }
 
-.supprimer { background: red; }
-.facture { background: blue; }
 .gps { background: orange; }
+.facture { background: blue; }
+.supprimer { background: red; }
+.fiche { background: purple; }
 </style>
 </head>
 
 <body>
 
-<h2>🌿 Planning Jardin PRO+</h2>
+<h2>🌿 Planning Jardin PRO++</h2>
+
+<h3 id="total"></h3>
 
 <input id="client" placeholder="Nom client">
 <input id="tel" placeholder="Téléphone">
@@ -47,7 +63,13 @@ button { background: green; color: white; border: none; }
 <input id="prestation" placeholder="Prestation">
 <input id="prix" placeholder="Prix (€)">
 
+<select id="paiement">
+  <option value="non payé">Non payé</option>
+  <option value="payé">Payé</option>
+</select>
+
 <button onclick="ajouter()">Ajouter</button>
+<button onclick="voirClients()">👤 Voir clients</button>
 
 <div id="planning"></div>
 
@@ -56,20 +78,21 @@ button { background: green; color: white; border: none; }
 let liste = JSON.parse(localStorage.getItem("planning")) || [];
 
 function ajouter() {
-  let client = document.getElementById("client").value;
+  let client = document.getElementById("client").value || "Client inconnu";
   let tel = document.getElementById("tel").value;
   let adresse = document.getElementById("adresse").value;
   let date = document.getElementById("date").value;
   let heure = document.getElementById("heure").value;
   let prestation = document.getElementById("prestation").value;
   let prix = document.getElementById("prix").value;
+  let paiement = document.getElementById("paiement").value;
 
   if (!date || !prestation) {
     alert("Date et prestation obligatoires !");
     return;
   }
 
-  liste.push({ client, tel, adresse, date, heure, prestation, prix });
+  liste.push({ client, tel, adresse, date, heure, prestation, prix, paiement });
 
   localStorage.setItem("planning", JSON.stringify(liste));
 
@@ -82,9 +105,19 @@ function afficher() {
   let planning = document.getElementById("planning");
   planning.innerHTML = "";
 
+  let total = 0;
+  let totalPaye = 0;
+
   liste.sort((a, b) => new Date(a.date + " " + a.heure) - new Date(b.date + " " + b.heure));
 
   liste.forEach((item, index) => {
+
+    let prix = Number(item.prix || 0);
+    total += prix;
+
+    if (item.paiement === "payé") {
+      totalPaye += prix;
+    }
 
     let div = document.createElement("div");
     div.className = "carte";
@@ -95,17 +128,21 @@ function afficher() {
       📞 ${item.tel}<br>
       📍 ${item.adresse}<br>
       🌿 ${item.prestation}<br>
-      💰 ${item.prix} €
+      💰 ${item.prix} € - ${item.paiement}
 
       <div class="actions">
         <button class="gps" onclick="gps('${item.adresse}')">📍 GPS</button>
-        <button class="facture" onclick="facture(${index})">🧾 Facture</button>
+        <button class="facture" onclick="facturePDF(${index})">🧾 PDF</button>
+        <button class="fiche" onclick="ficheClient('${item.client}')">👤 Fiche</button>
         <button class="supprimer" onclick="supprimer(${index})">❌ Supprimer</button>
       </div>
     `;
 
     planning.appendChild(div);
   });
+
+  document.getElementById("total").innerText =
+    "💰 Total : " + total + " € | ✅ Payé : " + totalPaye + " € | ❌ À recevoir : " + (total - totalPaye) + " €";
 }
 
 function supprimer(index) {
@@ -115,25 +152,84 @@ function supprimer(index) {
 }
 
 function gps(adresse) {
-  let url = "https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.google.com%2Fmaps%2Fsearch%2F%3Fapi%3D1%26query%3D&data=05%7C02%7C%7Cc712f0bc967147c449bd08de948bc4cd%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C639111525201144377%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=t0WUeYgIVbGbMHl3I53ntgaKTlfUW7PmOAXLq%2FIoJvs%3D&reserved=0" + encodeURIComponent(adresse);
+  let url = "https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.google.com%2Fmaps%2Fsearch%2F%3Fapi%3D1%26query%3D&data=05%7C02%7C%7C4d0072580b74400f359c08de9508f245%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C639112062802827594%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=2ZAwmP8Y6lqYH8DKABBtKPCljSmjZpq1KGcEPrlrCFk%3D&reserved=0" + encodeURIComponent(adresse);
   window.open(url, "_blank");
 }
 
-function facture(index) {
+function facturePDF(index) {
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
   let item = liste[index];
 
-  let contenu = `
-    FACTURE\n\n
-    Client : ${item.client}\n
-    Téléphone : ${item.tel}\n
-    Adresse : ${item.adresse}\n\n
-    Prestation : ${item.prestation}\n
-    Date : ${item.date}\n
-    Heure : ${item.heure}\n\n
-    Montant : ${item.prix} €
-  `;
+  doc.setFontSize(16);
+  doc.text("FACTURE", 20, 20);
 
-  alert(contenu);
+  doc.setFontSize(12);
+  doc.text("Client : " + item.client, 20, 40);
+  doc.text("Téléphone : " + item.tel, 20, 50);
+  doc.text("Adresse : " + item.adresse, 20, 60);
+
+  doc.text("Prestation : " + item.prestation, 20, 80);
+  doc.text("Date : " + item.date + " " + item.heure, 20, 90);
+
+  doc.text("Montant : " + item.prix + " €", 20, 110);
+
+  doc.save("facture_" + item.client + ".pdf");
+}
+
+function ficheClient(nom) {
+  let historique = liste.filter(item => item.client === nom);
+
+  let total = 0;
+  let paye = 0;
+
+  let texte = "👤 CLIENT : " + nom + "\n\n";
+
+  historique.forEach(item => {
+    total += Number(item.prix || 0);
+
+    if (item.paiement === "payé") {
+      paye += Number(item.prix || 0);
+    }
+
+    texte += item.date + " - " + item.prestation + " - " +
+      item.prix + " € (" + item.paiement + ")\n";
+  });
+
+  texte += "\n💰 Total : " + total + " €";
+  texte += "\n✅ Payé : " + paye + " €";
+  texte += "\n❌ Restant : " + (total - paye) + " €";
+
+  if (historique.length >= 10) {
+    texte += "\n⭐ Client VIP";
+  }
+
+  alert(texte);
+}
+
+function voirClients() {
+  let clients = {};
+
+  liste.forEach(item => {
+    if (!clients[item.client]) {
+      clients[item.client] = { total: 0, nombre: 0 };
+    }
+
+    clients[item.client].total += Number(item.prix || 0);
+    clients[item.client].nombre++;
+  });
+
+  let texte = "👤 LISTE CLIENTS\n\n";
+
+  for (let nom in clients) {
+    let c = clients[nom];
+    let vip = c.nombre >= 10 ? " ⭐ VIP" : "";
+
+    texte += nom + "\nPrestations : " + c.nombre +
+      "\nTotal : " + c.total + " €" + vip + "\n\n";
+  }
+
+  alert(texte);
 }
 
 afficher();
